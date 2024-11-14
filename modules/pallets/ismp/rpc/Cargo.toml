@@ -19,7 +19,7 @@ anyhow = { workspace = true }
 hex = { workspace = true }
 codec = { workspace = true, features = ["derive"], default-features = true }
 hex-literal = { workspace = true, default-features = true }
-jsonrpsee = { workspace = true, features = ["client-core", "server", "macros"] }
+jsonrpsee = { version = "0.24.5", features = ["client-core", "server", "macros"] }
 serde = { workspace = true, features = ["derive"], default-features = true }
 json = { workspace = true, default-features = true }
 tower = { version = "0.4.13", features = ["util"] }
