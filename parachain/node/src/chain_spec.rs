@@ -23,6 +23,7 @@ use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public, H256};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 use staging_xcm::v3::MultiLocation;
+use ismp::host::StateMachine;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<Extensions>;
@@ -186,6 +187,7 @@ fn testnet_genesis(
 ) -> serde_json::Value {
 	let asset_id: H256 = sp_io::hashing::keccak_256(&MultiLocation::parent().encode()).into();
 	let para_id: ParaId = id.into();
+	let coprocessor: Option<StateMachine> = Some(StateMachine::Kusama(id));
 
 	// sibling parachain for tests
 	let sibling = match id {
@@ -207,6 +209,9 @@ fn testnet_genesis(
 		},
 		"ismpParachain": {
 			"parachains": vec![sibling]
+		},
+		"ismp": {
+			"coprocessor": coprocessor
 		},
 		"session": {
 			"keys": invulnerables

@@ -106,10 +106,12 @@ use pallet_ismp::mmr::{Leaf, ProofKeys};
 use sp_core::{crypto::AccountId32, Get};
 use sp_runtime::traits::IdentityLookup;
 
+use pallet_ismp::migrations::MoveCoprocessorToStorage;
 #[cfg(feature = "runtime-benchmarks")]
 use sp_core::crypto::FromEntropy;
 #[cfg(feature = "runtime-benchmarks")]
 use staging_xcm::latest::{Junction, Junctions::X1};
+
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 pub type Signature = MultiSignature;
 
@@ -164,6 +166,8 @@ pub type UncheckedExtrinsic =
 /// Extrinsic type that has already been checked.
 pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra>;
 
+type Migrations = (MoveCoprocessorToStorage<Runtime, ismp::Coprocessor>,);
+
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
 	Runtime,
@@ -171,6 +175,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
+	Migrations,
 >;
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the

@@ -111,8 +111,6 @@
 //!     type Balance = Balance;
 //!     // Router implementation for routing requests/responses to their respective modules
 //!     type Router = Router;
-//!     // Optional coprocessor for incoming requests/responses
-//!     type Coprocessor = Coprocessor;
 //!     // Supported consensus clients
 //!     type ConsensusClients = (
 //!         // as an example, the parachain consensus client
@@ -181,6 +179,8 @@ pub mod errors;
 pub mod events;
 pub mod host;
 mod impls;
+/// mod for storage migrations
+pub mod migrations;
 pub mod mmr;
 mod utils;
 pub mod weights;
@@ -194,7 +194,7 @@ pub use pallet::*;
 /// implementation does not panic for any runtime called methods, eg `push` or `finalize`
 /// It will always return the default values for those methods.
 ///
-/// Additionally this implementation stores the requests and responses directly inside the offchain
+/// Additionially this implementation stores the requests and responses directly inside the offchain
 /// db using the commitment as the offchain key
 /// *NOTE* it will return an error if you try to generate proofs.
 pub type NoOpMmrTree<T> = NoOpTree<Leaf, Pallet<T>>;
@@ -285,15 +285,6 @@ pub mod pallet {
 		/// machine.
 		type HostStateMachine: Get<StateMachine>;
 
-		/// The coprocessor is a state machine which proxies requests on our behalf. The coprocessor
-		/// does this by performing the costly consensus and state proof verification needed to
-		/// verify requests/responses that are addressed to this host state machine.
-		///
-		/// The ISMP framework permits the coprocessor to aggregate messages from potentially
-		/// multiple state machines. Finally producing much cheaper proofs of consensus and state
-		/// needed to verify the legitimacy of the messages.
-		type Coprocessor: Get<Option<StateMachine>>;
-
 		/// [`IsmpRouter`] implementation for routing requests & responses to their appropriate
 		/// modules.
 		type Router: IsmpRouter + Default;
@@ -320,6 +311,16 @@ pub mod pallet {
 	#[pallet::pallet]
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
+
+	/// The coprocessor is a state machine which proxies requests on our behalf. The coprocessor
+	/// does this by performing the costly consensus and state proof verification needed to
+	/// verify requests/responses that are addressed to this host state machine.
+	///
+	/// The ISMP framework permits the coprocessor to aggregate messages from potentially
+	/// multiple state machines. Finally producing much cheaper proofs of consensus and state
+	/// needed to verify the legitimacy of the messages.
+	#[pallet::storage]
+	pub type Coprocessor<T: Config> = StorageValue<_, StateMachine, OptionQuery>;
 
 	/// Holds a map of state machine heights to their verified state commitments. These state
 	/// commitments end up here after they are successfully verified by a `ConsensusClient`
@@ -393,6 +394,26 @@ pub mod pallet {
 	#[pallet::getter(fn child_trie_root)]
 	pub type ChildTrieRoot<T: Config> =
 		StorageValue<_, <T as frame_system::Config>::Hash, ValueQuery>;
+
+	/// Genesis settings
+	#[pallet::genesis_config]
+	#[derive(frame_support::DefaultNoBound)]
+	pub struct GenesisConfig<T: Config> {
+		/// The optional coprocessor for inbound messages
+		pub coprocessor: Option<StateMachine>,
+		/// Phantom data
+		#[serde(skip)]
+		pub _phantom: PhantomData<T>,
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
+		fn build(&self) {
+			if let Some(coprocessor) = self.coprocessor {
+				Coprocessor::<T>::put(coprocessor.clone());
+			}
+		}
+	}
 
 	// Pallet implements [`Hooks`] trait to define some logic to execute in some context.
 	#[pallet::hooks]
@@ -563,6 +584,18 @@ pub mod pallet {
 				},
 			};
 
+			Ok(())
+		}
+
+		/// Change or set the coprocessor
+		#[pallet::weight(<T as frame_system::Config>::DbWeight::get().writes(1))]
+		#[pallet::call_index(5)]
+		pub fn update_coprocessor(
+			origin: OriginFor<T>,
+			coprocessor: Option<StateMachine>,
+		) -> DispatchResult {
+			T::AdminOrigin::ensure_origin(origin)?;
+			Coprocessor::<T>::set(coprocessor);
 			Ok(())
 		}
 	}

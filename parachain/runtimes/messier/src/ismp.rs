@@ -32,18 +32,18 @@ use ismp::{
 	module::IsmpModule,
 	router::{IsmpRouter, PostRequest, Request, Response},
 };
-use pallet_xcm_gateway::AssetGatewayParams;
 #[cfg(feature = "runtime-benchmarks")]
 use pallet_assets::BenchmarkHelper;
+use pallet_xcm_gateway::AssetGatewayParams;
 use sp_core::crypto::AccountId32;
 use sp_runtime::Permill;
 
+use anyhow::anyhow;
 use ismp::router::Timeout;
 use ismp_sync_committee::constants::mainnet::Mainnet;
 use pallet_ismp::{dispatcher::FeeMetadata, ModuleId};
 use sp_std::prelude::*;
 use staging_xcm::latest::Location;
-use anyhow::anyhow;
 
 #[derive(Default)]
 pub struct ProxyModule;
@@ -77,7 +77,6 @@ impl pallet_ismp::Config for Runtime {
 	type Router = Router;
 	type Balance = Balance;
 	type Currency = Balances;
-	type Coprocessor = Coprocessor;
 	type ConsensusClients = (
 		ismp_bsc::BscClient<Ismp, Runtime, ismp_bsc::Mainnet>,
 		ismp_sync_committee::SyncCommitteeConsensusClient<Ismp, Mainnet, Runtime>,
@@ -187,8 +186,9 @@ impl IsmpModule for ProxyModule {
 
 		let token_gateway = ModuleId::Evm(Gateway::token_gateway_address(&request.source));
 		match pallet_id {
-			id if id == token_gateway =>
-				pallet_xcm_gateway::Module::<Runtime>::default().on_accept(request),
+			id if id == token_gateway => {
+				pallet_xcm_gateway::Module::<Runtime>::default().on_accept(request)
+			},
 			_ => Err(anyhow!("Destination module not found")),
 		}
 	}
@@ -215,8 +215,9 @@ impl IsmpModule for ProxyModule {
 		let pallet_id = ModuleId::from_bytes(from).map_err(|err| Error::Custom(err.to_string()))?;
 		let token_gateway = ModuleId::Evm(Gateway::token_gateway_address(source));
 		match pallet_id {
-			id if id == token_gateway =>
-				pallet_xcm_gateway::Module::<Runtime>::default().on_timeout(timeout),
+			id if id == token_gateway => {
+				pallet_xcm_gateway::Module::<Runtime>::default().on_timeout(timeout)
+			},
 			// instead of returning an error, do nothing. The timeout is for a connected chain.
 			_ => Ok(()),
 		}

@@ -148,6 +148,8 @@ pub type UncheckedExtrinsic =
 /// Extrinsic type that has already been checked.
 pub type CheckedExtrinsic = generic::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra>;
 
+type Migrations = (MoveCoprocessorToStorage<Runtime, ismp::Coprocessor>,);
+
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
 	Runtime,
@@ -155,6 +157,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
+	Migrations,
 >;
 
 /// Handles converting a weight scalar to a fee value, based on the scale and granularity of the
@@ -217,7 +220,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("nexus"),
 	impl_name: create_runtime_str!("nexus"),
 	authoring_version: 1,
-	spec_version: 1800,
+	spec_version: 1801,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -313,6 +316,7 @@ parameter_types! {
 use ::ismp::host::StateMachine;
 use frame_support::{derive_impl, traits::tokens::pay::PayAssetFromAccount};
 use pallet_collective::PrimeDefaultVote;
+use pallet_ismp::migrations::MoveCoprocessorToStorage;
 use pallet_ismp::mmr::Leaf;
 #[cfg(feature = "runtime-benchmarks")]
 use pallet_treasury::ArgumentsFactory;

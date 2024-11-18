@@ -86,7 +86,6 @@ impl pallet_ismp::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type HostStateMachine = HostStateMachine;
-	type Coprocessor = Coprocessor;
 	type TimestampProvider = Timestamp;
 	type Balance = Balance;
 	type Currency = Balances;

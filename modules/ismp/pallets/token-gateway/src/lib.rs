@@ -51,6 +51,7 @@ use primitive_types::H256;
 
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
+use pallet_ismp::Coprocessor;
 
 /// Minimum balance for token gateway assets
 const MIN_BALANCE: u128 = 1_000_000_000;
@@ -73,6 +74,7 @@ pub mod pallet {
 	};
 	use pallet_hyperbridge::{SubstrateHostParams, VersionedHostParams};
 	use sp_runtime::traits::Zero;
+	use pallet_ismp::Coprocessor;
 	use token_gateway_primitives::{GatewayAssetUpdate, RemoteERC6160AssetRegistration};
 
 	#[pallet::pallet]
@@ -349,7 +351,8 @@ pub mod pallet {
 
 			let dispatcher = <T as Config>::Dispatcher::default();
 			let dispatch_post = DispatchPost {
-				dest: T::Coprocessor::get().ok_or_else(|| Error::<T>::CoprocessorNotConfigured)?,
+				dest: Coprocessor::<T>::get()
+					.ok_or_else(|| Error::<T>::CoprocessorNotConfigured)?,
 				from: token_gateway_id().0.to_vec(),
 				to: token_governor_id(),
 				timeout: 0,
@@ -396,7 +399,7 @@ pub mod pallet {
 
 			let dispatcher = <T as Config>::Dispatcher::default();
 			let dispatch_post = DispatchPost {
-				dest: T::Coprocessor::get().ok_or_else(|| Error::<T>::CoprocessorNotConfigured)?,
+				dest: Coprocessor::<T>::get().ok_or_else(|| Error::<T>::CoprocessorNotConfigured)?,
 				from: token_gateway_id().0.to_vec(),
 				to: token_governor_id(),
 				timeout: 0,
@@ -436,7 +439,7 @@ where
 	) -> Result<(), anyhow::Error> {
 		// The only requests allowed from token governor on Hyperbridge is asset creation, updating
 		// and deregistering
-		if from == token_governor_id() && Some(source) == T::Coprocessor::get() {
+		if from == token_governor_id() && Some(source) == Coprocessor::<T>::get() {
 			if let Ok(metadata) = AssetMetadata::decode(&mut &body[..]) {
 				let asset_id: H256 = sp_io::hashing::keccak_256(metadata.symbol.as_ref()).into();
 				// If the local aset Id exists, then  it must mean this is an update.
@@ -478,7 +481,7 @@ where
 					// Note the asset's ERC counterpart decimal
 					Decimals::<T>::insert(local_asset_id, metadata.decimals);
 				}
-				return Ok(())
+				return Ok(());
 			}
 
 			if let Ok(meta) = DeregisterAssets::decode(&mut &body[..]) {
@@ -492,8 +495,8 @@ where
 			}
 		}
 		ensure!(
-			from == TokenGatewayAddresses::<T>::get(source).unwrap_or_default().to_vec() ||
-				from == token_gateway_id().0.to_vec(),
+			from == TokenGatewayAddresses::<T>::get(source).unwrap_or_default().to_vec()
+				|| from == token_gateway_id().0.to_vec(),
 			ismp::error::Error::ModuleDispatchError {
 				msg: "Token Gateway: Unknown source contract address".to_string(),
 				meta: Meta { source, dest, nonce },

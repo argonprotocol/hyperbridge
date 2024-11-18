@@ -23,7 +23,7 @@ extern crate alloc;
 use alloc::{collections::BTreeMap, format, string::ToString, vec, vec::Vec};
 use codec::{Decode, Encode};
 use core::{fmt::Debug, marker::PhantomData, time::Duration};
-use frame_support::{ensure, traits::Get};
+use frame_support::ensure;
 use ismp::{
 	consensus::{StateCommitment, StateMachineClient},
 	error::Error,
@@ -33,7 +33,7 @@ use ismp::{
 };
 use pallet_ismp::{
 	child_trie::{RequestCommitments, RequestReceipts, ResponseCommitments, ResponseReceipts},
-	ConsensusDigest, ISMP_ID,
+	ConsensusDigest, Coprocessor, ISMP_ID,
 };
 use sp_consensus_aura::{Slot, AURA_ENGINE_ID};
 use sp_consensus_babe::{digests::PreDigest, BABE_ENGINE_ID};
@@ -125,7 +125,7 @@ where
 			Error::Custom("Expected Overlay Proof".to_string())
 		);
 
-		let root = match T::Coprocessor::get() {
+		let root = match Coprocessor::<T>::get() {
 			Some(id) if id == proof.height.id.state_id => state.state_root, /* child root on */
 			// hyperbridge
 			_ => state.overlay_root.ok_or_else(|| {
@@ -195,7 +195,7 @@ where
 	fn receipts_state_trie_key(&self, items: RequestResponse) -> Vec<Vec<u8>> {
 		let mut keys = vec![];
 		match items {
-			RequestResponse::Request(requests) =>
+			RequestResponse::Request(requests) => {
 				for req in requests {
 					match req {
 						Request::Post(post) => {
@@ -205,8 +205,9 @@ where
 						},
 						Request::Get(_) => continue,
 					}
-				},
-			RequestResponse::Response(responses) =>
+				}
+			},
+			RequestResponse::Response(responses) => {
 				for res in responses {
 					match res {
 						Response::Post(post_response) => {
@@ -216,7 +217,8 @@ where
 						},
 						Response::Get(_) => continue,
 					}
-				},
+				}
+			},
 		};
 
 		keys
@@ -233,7 +235,7 @@ where
 			.map_err(|e| Error::Custom(format!("failed to decode proof: {e:?}")))?;
 		let root = match &state_proof {
 			SubstrateStateProof::OverlayProof { .. } => {
-				match T::Coprocessor::get() {
+				match Coprocessor::<T>::get() {
 					Some(id) if id == proof.height.id.state_id => root.state_root,
 					// child root on hyperbridge
 					_ => root.overlay_root.ok_or_else(|| {

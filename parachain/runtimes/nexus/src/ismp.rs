@@ -92,7 +92,6 @@ impl pallet_ismp::Config for Runtime {
 	type Router = Router;
 	type Balance = Balance;
 	type Currency = Balances;
-	type Coprocessor = Coprocessor;
 	type ConsensusClients = (
 		ismp_bsc::BscClient<Ismp, Runtime, ismp_bsc::Mainnet>,
 		ismp_sync_committee::SyncCommitteeConsensusClient<Ismp, Mainnet, Runtime, Ethereum>,

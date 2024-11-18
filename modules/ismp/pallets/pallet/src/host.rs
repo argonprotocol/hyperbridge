@@ -15,14 +15,7 @@
 
 //! [`IsmpHost`] implementation for pallet-ismp
 
-use crate::{
-	child_trie,
-	dispatcher::{RefundingRouter, RequestMetadata},
-	utils::{ConsensusClientProvider, ResponseReceipt},
-	ChallengePeriod, Config, ConsensusClientUpdateTime, ConsensusStateClient, ConsensusStates,
-	FrozenConsensusClients, LatestStateMachineHeight, Nonce, Pallet, Responded,
-	StateMachineUpdateTime, UnbondingPeriod,
-};
+use crate::{child_trie, dispatcher::{RefundingRouter, RequestMetadata}, utils::{ConsensusClientProvider, ResponseReceipt}, ChallengePeriod, Config, ConsensusClientUpdateTime, ConsensusStateClient, ConsensusStates, Coprocessor, FrozenConsensusClients, LatestStateMachineHeight, Nonce, Pallet, Responded, StateMachineUpdateTime, UnbondingPeriod};
 use alloc::{format, string::ToString};
 use codec::{Decode, Encode};
 use core::time::Duration;
@@ -285,7 +278,7 @@ impl<T: Config> IsmpHost for Pallet<T> {
 	}
 
 	fn allowed_proxy(&self) -> Option<StateMachine> {
-		T::Coprocessor::get()
+		Coprocessor::<T>::get()
 	}
 
 	fn unbonding_period(&self, consensus_state_id: ConsensusStateId) -> Option<Duration> {

@@ -60,7 +60,7 @@ use alloc::{collections::BTreeMap, format};
 use codec::{Decode, Encode};
 use frame_support::{
 	sp_runtime::traits::AccountIdConversion,
-	traits::{fungible::Mutate, tokens::Preservation, Get},
+	traits::{fungible::Mutate, tokens::Preservation},
 };
 use ismp::{
 	dispatcher::{DispatchRequest, FeeMetadata, IsmpDispatcher},
@@ -69,7 +69,7 @@ use ismp::{
 	router::{PostRequest, PostResponse, Response, Timeout},
 };
 pub use pallet::*;
-use pallet_ismp::RELAYER_FEE_ACCOUNT;
+use pallet_ismp::{Coprocessor, RELAYER_FEE_ACCOUNT};
 use primitive_types::H256;
 
 pub mod child_trie;
@@ -296,7 +296,7 @@ where
 	fn on_accept(&self, request: PostRequest) -> Result<(), anyhow::Error> {
 		// this of course assumes that hyperbridge is configured as the coprocessor.
 		let source = request.source;
-		if Some(source) != T::Coprocessor::get() {
+		if Some(source) != Coprocessor::<T>::get() {
 			Err(ismp::Error::Custom(format!("Invalid request source: {source}")))?
 		}
 

@@ -37,8 +37,8 @@ use grandpa_verifier_primitives::{
 	justification::{AncestryChain, GrandpaJustification},
 	ConsensusState, FinalityProof, ParachainHeadersWithFinalityProof,
 };
-use sp_core::Get;
 use sp_runtime::traits::Header;
+use pallet_ismp::Coprocessor;
 use substrate_state_machine::{fetch_overlay_root_and_timestamp, SubstrateStateMachine};
 
 /// [`ConsensusStateId`] for the polkadot relay chain
@@ -118,7 +118,7 @@ where
 				for (para_id, header_vec, slot_duration) in parachain_headers {
 					let mut state_commitments_vec = Vec::new();
 
-					let state_id: StateMachine = match T::Coprocessor::get() {
+					let state_id: StateMachine = match Coprocessor::<T>::get() {
 						Some(StateMachine::Polkadot(_)) => StateMachine::Polkadot(para_id),
 						Some(StateMachine::Kusama(_)) => StateMachine::Kusama(para_id),
 						_ => Err(Error::Custom(
@@ -137,7 +137,7 @@ where
 
 						let height: u32 = (*header.number()).into();
 
-						let intermediate = match T::Coprocessor::get() {
+						let intermediate = match Coprocessor::<T>::get() {
 							Some(id) if id == state_id => StateCommitmentHeight {
 								// for the coprocessor, we only care about the child root & mmr root
 								commitment: StateCommitment {

@@ -192,7 +192,6 @@ impl pallet_ismp::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type AdminOrigin = EnsureRoot<AccountId32>;
 	type HostStateMachine = StateMachineProvider;
-	type Coprocessor = Coprocessor;
 	type TimestampProvider = Timestamp;
 	type Router = ModuleRouter;
 	type Balance = Balance;

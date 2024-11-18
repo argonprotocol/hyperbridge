@@ -21,7 +21,6 @@ use alloc::{boxed::Box, collections::BTreeMap, format, string::ToString, vec::Ve
 use codec::{Decode, Encode};
 use core::fmt::Debug;
 use cumulus_pallet_parachain_system::{RelaychainDataProvider, RelaychainStateProvider};
-use frame_support::traits::Get;
 use ismp::{
 	consensus::{
 		ConsensusClient, ConsensusClientId, ConsensusStateId, StateCommitment, StateMachineClient,
@@ -31,7 +30,7 @@ use ismp::{
 	host::{IsmpHost, StateMachine},
 	messaging::StateCommitmentHeight,
 };
-use pallet_ismp::{ConsensusDigest, ISMP_ID};
+use pallet_ismp::{ConsensusDigest, Coprocessor, ISMP_ID};
 use primitive_types::H256;
 use sp_consensus_aura::{Slot, AURA_ENGINE_ID};
 use sp_runtime::{
@@ -163,7 +162,7 @@ where
 				_ => Err(Error::Custom("Host state machine should be a parachain".into()))?,
 			};
 
-			let intermediate = match T::Coprocessor::get() {
+			let intermediate = match Coprocessor::<T>::get() {
 				Some(id) if id == state_id => StateCommitmentHeight {
 					// for the coprocessor, we only care about the child root & mmr root
 					commitment: StateCommitment {
